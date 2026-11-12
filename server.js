@@ -26,25 +26,77 @@ app.use((req, res, next) => {
   next();
 });
 
+app.post('/api/register', async (req, res, next) => {
+  // incoming: firstName, lastName, login, password
+  // outgoing: id, firstName, lastName, error
+  const { firstName, lastName, login, password } = req.body;
+  let error = '';
+  let id = -1;
+
+  if (!login || !password || !firstName || !lastName) {
+    return res.status(200).json({ id: -1, firstName: '', lastName: '', error: 'All fields are required' });
+  }
+
+  try {
+    const db = client.db('COP4331Cards');
+    const existing = await db.collection('Users').findOne({ Login: login.trim() });
+
+    if (existing) {
+      return res.status(200).json({ id: -1, firstName: '', lastName: '', error: 'Username already taken' });
+    }
+
+    const count = await db.collection('Users').countDocuments();
+    const newUserId = count + 2; // Keeps ID 1 reserved for RickL
+
+    const newUser = {
+      UserId: newUserId,
+      FirstName: firstName.trim(),
+      LastName: lastName.trim(),
+      Login: login.trim(),
+      Password: password.trim()
+    };
+
+    await db.collection('Users').insertOne(newUser);
+    id = newUserId;
+    res.status(200).json({ id: id, firstName: firstName.trim(), lastName: lastName.trim(), error: '' });
+  } catch (e) {
+    res.status(200).json({ id: -1, firstName: '', lastName: '', error: e.toString() });
+  }
+});
+
 app.post('/api/login', async (req, res, next) => {
+  // incoming: login, password
+  // outgoing: id, firstName, lastName, error
   let error = '';
   const { login, password } = req.body;
-
   let id = -1;
   let fn = '';
   let ln = '';
 
-  if (login.toLowerCase() === 'rickl' && password === 'COP4331') {
+  // Support default RickL test account
+  if (login && login.toLowerCase() === 'rickl' && password === 'COP4331') {
     id = 1;
     fn = 'Rick';
     ln = 'Leinecker';
-  }
-  else {
-    error = 'Invalid user name/password';
+    return res.status(200).json({ id: id, firstName: fn, lastName: ln, error: '' });
   }
 
-  let ret = { id: id, firstName: fn, lastName: ln, error: error };
-  res.status(200).json(ret);
+  try {
+    const db = client.db('COP4331Cards');
+    const user = await db.collection('Users').findOne({ Login: login.trim(), Password: password.trim() });
+
+    if (user) {
+      id = user.UserId;
+      fn = user.FirstName;
+      ln = user.LastName;
+    } else {
+      error = 'Invalid user name/password';
+    }
+  } catch (e) {
+    error = e.toString();
+  }
+
+  res.status(200).json({ id: id, firstName: fn, lastName: ln, error: error });
 });
 
 app.post('/api/addcard', async (req, res, next) => {
