@@ -3,58 +3,81 @@ import { buildPath } from '../Path';
 
 function Login() {
     const [message, setMessage] = useState('');
-    const [loginName, setLoginName] = React.useState('');
-    const [loginPassword, setPassword] = React.useState('');
-
-    function handleSetLoginName(e: any): void {
-        setLoginName(e.target.value);
-    }
-
-    function handleSetPassword(e: any): void {
-        setPassword(e.target.value);
-    }
+    const [loginName, setLoginName] = useState('');
+    const [loginPassword, setPassword] = useState('');
 
     async function doLogin(event: any): Promise<void> {
         event.preventDefault();
 
-        let obj = { login: loginName, password: loginPassword };
-        let js = JSON.stringify(obj);
+        const obj = { login: loginName, password: loginPassword };
+        const js = JSON.stringify(obj);
 
         try {
-            const response = await fetch(buildPath('api/login'),
-                { method: 'POST', body: js, headers: { 'Content-Type': 'application/json' } });
+            const response = await fetch(buildPath('api/login'), {
+                method: 'POST',
+                body: js,
+                headers: { 'Content-Type': 'application/json' },
+            });
 
-            let res = JSON.parse(await response.text());
+            const res = JSON.parse(await response.text());
 
             if (res.id <= 0) {
                 setMessage('User/Password combination incorrect');
-            }
-            else {
-                let user = { firstName: res.firstName, lastName: res.lastName, id: res.id };
+            } else {
+                const user = {
+                    firstName: res.firstName,
+                    lastName: res.lastName,
+                    id: res.id,
+                };
                 localStorage.setItem('user_data', JSON.stringify(user));
-
                 setMessage('');
                 window.location.href = '/cards';
             }
+        } catch (error: any) {
+            setMessage(error.toString());
         }
-        catch (error: any) {
-            alert(error.toString());
-            return;
-        }
-    };
+    }
 
     return (
-        <div id="loginDiv">
-            <span id="inner-title">PLEASE LOG IN</span><br />
-            Login: <input type="text" id="loginName" placeholder="Username"
-                onChange={handleSetLoginName} /><br />
-            Password: <input type="password" id="loginPassword" placeholder="Password"
-                onChange={handleSetPassword} /><br />
-            <input type="submit" id="loginButton" className="buttons" value="Do It"
-                onClick={doLogin} />
-            <span id="loginResult">{message}</span>
+        <div className="app-container">
+            <h1 className="title">Card Keeper</h1>
+            <div className="subtitle">Sign in to your account</div>
+
+            <form onSubmit={doLogin}>
+                <div className="form-group">
+                    <label htmlFor="loginName">Username</label>
+                    <input
+                        type="text"
+                        id="loginName"
+                        className="input-field"
+                        placeholder="e.g. RickL"
+                        value={loginName}
+                        onChange={(e) => setLoginName(e.target.value)}
+                        required
+                    />
+                </div>
+
+                <div className="form-group">
+                    <label htmlFor="loginPassword">Password</label>
+                    <input
+                        type="password"
+                        id="loginPassword"
+                        className="input-field"
+                        placeholder="••••••••"
+                        value={loginPassword}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                    />
+                </div>
+
+                <button type="submit" className="btn-primary">
+                    Log In
+                </button>
+            </form>
+
+            {message && <div className="status-message error">{message}</div>}
         </div>
     );
-};
+}
 
 export default Login;

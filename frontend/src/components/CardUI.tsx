@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { buildPath } from '../Path';
 
 function CardUI() {
-    let _ud: any = localStorage.getItem('user_data');
-    let ud = JSON.parse(_ud);
-    let userId: string = ud.id;
+    const _ud: any = localStorage.getItem('user_data');
+    const ud = JSON.parse(_ud || '{}');
+    const userId: string = ud.id;
 
     const [message, setMessage] = useState('');
     const [searchResults, setResults] = useState('');
@@ -12,82 +12,103 @@ function CardUI() {
     const [search, setSearchValue] = React.useState('');
     const [card, setCardNameValue] = React.useState('');
 
-    function handleSearchTextChange(e: any): void {
-        setSearchValue(e.target.value);
-    }
-
-    function handleCardTextChange(e: any): void {
-        setCardNameValue(e.target.value);
-    }
-
     async function addCard(e: any): Promise<void> {
         e.preventDefault();
-
-        let obj = { userId: userId, card: card };
-        let js = JSON.stringify(obj);
+        const obj = { userId: userId, card: card };
+        const js = JSON.stringify(obj);
 
         try {
-            const response = await fetch(buildPath('api/addcard'),
-                { method: 'POST', body: js, headers: { 'Content-Type': 'application/json' } });
+            const response = await fetch(buildPath('api/addcard'), {
+                method: 'POST',
+                body: js,
+                headers: { 'Content-Type': 'application/json' },
+            });
 
-            let txt = await response.text();
-            let res = JSON.parse(txt);
+            const res = JSON.parse(await response.text());
 
-            if (res.error.length > 0) {
-                setMessage("API Error:" + res.error);
-            }
-            else {
+            if (res.error && res.error.length > 0) {
+                setMessage('API Error: ' + res.error);
+            } else {
                 setMessage('Card has been added');
+                setCardNameValue('');
             }
-        }
-        catch (error: any) {
+        } catch (error: any) {
             setMessage(error.toString());
         }
-    };
+    }
 
     async function searchCard(e: any): Promise<void> {
         e.preventDefault();
-
-        let obj = { userId: userId, search: search };
-        let js = JSON.stringify(obj);
+        const obj = { userId: userId, search: search };
+        const js = JSON.stringify(obj);
 
         try {
-            const response = await fetch(buildPath('api/searchcards'),
-                { method: 'POST', body: js, headers: { 'Content-Type': 'application/json' } });
+            const response = await fetch(buildPath('api/searchcards'), {
+                method: 'POST',
+                body: js,
+                headers: { 'Content-Type': 'application/json' },
+            });
 
-            let txt = await response.text();
-            let res = JSON.parse(txt);
-            let _results = res.results;
-            let resultText = '';
-            for (let i = 0; i < _results.length; i++) {
-                resultText += _results[i];
-                if (i < _results.length - 1) {
-                    resultText += ', ';
-                }
-            }
-            setResults('Card(s) have been retrieved');
-            setCardList(resultText);
-        }
-        catch (error: any) {
-            alert(error.toString());
+            const res = JSON.parse(await response.text());
+            const _results = res.results || [];
+            setResults('Found ' + _results.length + ' card(s)');
+            setCardList(_results.join(', '));
+        } catch (error: any) {
             setResults(error.toString());
         }
-    };
+    }
 
     return (
-        <div id="cardUIDiv">
-            <br />
-            Search: <input type="text" id="searchText" placeholder="Card To Search For"
-                onChange={handleSearchTextChange} />
-            <button type="button" id="searchCardButton" className="buttons"
-                onClick={searchCard}> Search Card </button><br />
-            <span id="cardSearchResult">{searchResults}</span>
-            <p id="cardList">{cardList}</p><br /><br />
-            Add: <input type="text" id="cardText" placeholder="Card To Add"
-                onChange={handleCardTextChange} />
-            <button type="button" id="addCardButton" className="buttons"
-                onClick={addCard}> Add Card </button><br />
-            <span id="cardAddResult">{message}</span>
+        <div className="app-container">
+            <h1 className="title">Card Deck</h1>
+            <div className="subtitle">Manage Your Collection</div>
+
+            {/* Add Card Section */}
+            <form onSubmit={addCard} style={{ marginBottom: '2rem' }}>
+                <div className="form-group">
+                    <label htmlFor="cardName">New Card Name</label>
+                    <input
+                        type="text"
+                        id="cardName"
+                        className="input-field"
+                        placeholder="e.g. Ace of Spades"
+                        value={card}
+                        onChange={(e) => setCardNameValue(e.target.value)}
+                        required
+                    />
+                </div>
+                <button type="submit" className="btn-primary">
+                    Add Card
+                </button>
+                {message && <div className="status-message success">{message}</div>}
+            </form>
+
+            <hr style={{ borderColor: 'var(--border-color)', margin: '1.5rem 0' }} />
+
+            {/* Search Cards Section */}
+            <form onSubmit={searchCard}>
+                <div className="form-group">
+                    <label htmlFor="searchVal">Search Collection</label>
+                    <input
+                        type="text"
+                        id="searchVal"
+                        className="input-field"
+                        placeholder="Type card name..."
+                        value={search}
+                        onChange={(e) => setSearchValue(e.target.value)}
+                    />
+                </div>
+                <button type="submit" className="btn-secondary" style={{ width: '100%' }}>
+                    Search Cards
+                </button>
+            </form>
+
+            {searchResults && (
+                <div style={{ marginTop: '1.5rem' }}>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{searchResults}</div>
+                    {cardList && <div className="card-item">{cardList}</div>}
+                </div>
+            )}
         </div>
     );
 }
