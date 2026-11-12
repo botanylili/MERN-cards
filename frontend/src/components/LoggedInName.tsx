@@ -1,5 +1,3 @@
-import React from 'react';
-
 function LoggedInName() {
     const _ud: any = localStorage.getItem('user_data');
     const ud = JSON.parse(_ud || '{}');

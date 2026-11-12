@@ -1,7 +1,9 @@
-function PageTitle()
-{
-   return(
-     <h1 id="title">COP 4331 MERN Stack Demo</h1>
-   );
-};
+function PageTitle() {
+  return (
+    <header>
+      <h2 className="page-header">COP 4331 MERN Stack Demo</h2>
+    </header>
+  );
+}
+
 export default PageTitle;
