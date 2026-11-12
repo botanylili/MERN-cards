@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { buildPath } from '../Path';
 
 function CardUI() {
@@ -9,8 +9,8 @@ function CardUI() {
     const [message, setMessage] = useState('');
     const [searchResults, setResults] = useState('');
     const [cardList, setCardList] = useState('');
-    const [search, setSearchValue] = React.useState('');
-    const [card, setCardNameValue] = React.useState('');
+    const [search, setSearchValue] = useState('');
+    const [card, setCardNameValue] = useState('');
 
     async function addCard(e: any): Promise<void> {
         e.preventDefault();
@@ -51,7 +51,7 @@ function CardUI() {
 
             const res = JSON.parse(await response.text());
             const _results = res.results || [];
-            setResults('Found ' + _results.length + ' card(s)');
+            setResults(`Found ${_results.length} card(s)`);
             setCardList(_results.join(', '));
         } catch (error: any) {
             setResults(error.toString());
@@ -60,18 +60,18 @@ function CardUI() {
 
     return (
         <div className="app-container">
-            <h1 className="title">Card Deck</h1>
-            <div className="subtitle">Manage Your Collection</div>
+            <h2 className="card-title">Card Deck</h2>
+            <div className="card-subtitle">Manage Your Collection</div>
 
             {/* Add Card Section */}
-            <form onSubmit={addCard} style={{ marginBottom: '2rem' }}>
+            <form onSubmit={addCard} style={{ marginBottom: '1.5rem' }}>
                 <div className="form-group">
                     <label htmlFor="cardName">New Card Name</label>
                     <input
                         type="text"
                         id="cardName"
                         className="input-field"
-                        placeholder="e.g. Ace of Spades"
+                        placeholder="e.g. Blue-Eyes White Dragon"
                         value={card}
                         onChange={(e) => setCardNameValue(e.target.value)}
                         required
@@ -83,7 +83,7 @@ function CardUI() {
                 {message && <div className="status-message success">{message}</div>}
             </form>
 
-            <hr style={{ borderColor: 'var(--border-color)', margin: '1.5rem 0' }} />
+            <hr style={{ borderColor: 'rgba(255, 255, 255, 0.12)', margin: '1.5rem 0' }} />
 
             {/* Search Cards Section */}
             <form onSubmit={searchCard}>
@@ -93,7 +93,7 @@ function CardUI() {
                         type="text"
                         id="searchVal"
                         className="input-field"
-                        placeholder="Type card name..."
+                        placeholder="Search by card name..."
                         value={search}
                         onChange={(e) => setSearchValue(e.target.value)}
                     />
@@ -104,9 +104,9 @@ function CardUI() {
             </form>
 
             {searchResults && (
-                <div style={{ marginTop: '1.5rem' }}>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{searchResults}</div>
-                    {cardList && <div className="card-item">{cardList}</div>}
+                <div style={{ marginTop: '1.25rem' }}>
+                    <div style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 600 }}>{searchResults}</div>
+                    {cardList && <div className="card-item-box">{cardList}</div>}
                 </div>
             )}
         </div>
