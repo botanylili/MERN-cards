@@ -10,6 +10,6 @@ const CardPage = () => {
             <CardUI />
         </div>
     );
-}
+};
 
 export default CardPage;
