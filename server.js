@@ -116,25 +116,81 @@ app.post('/api/addcard', async (req, res, next) => {
   res.status(200).json(ret);
 });
 
-app.post('/api/searchcards', async (req, res, next) => {
+app.post('/api/editcard', async (req, res, next) => {
+  // incoming: cardId (or oldCard/card name), newCard, userId
+  // outgoing: error
+  const { cardId, newCard, userId } = req.body;
   let error = '';
-  const { userId, search } = req.body;
-  let _search = (search || '').trim();
 
-  let _ret = [];
   try {
     const db = client.db('COP4331Cards');
-    const results = await db.collection('Cards').find({ "Card": { $regex: _search + '.*', $options: 'i' } }).toArray();
-    for (let i = 0; i < results.length; i++) {
-      _ret.push(results[i].Card);
+    const { ObjectId } = require('mongodb');
+
+    // Update by _id if valid, otherwise update matching Card string for this user
+    if (cardId && ObjectId.isValid(cardId)) {
+      await db.collection('Cards').updateOne(
+        { _id: new ObjectId(cardId), UserId: userId },
+        { $set: { Card: newCard.trim() } }
+      );
+    } else {
+      await db.collection('Cards').updateOne(
+        { Card: cardId, UserId: userId },
+        { $set: { Card: newCard.trim() } }
+      );
     }
-  }
-  catch (e) {
+  } catch (e) {
     error = e.toString();
   }
 
-  let ret = { results: _ret, error: error };
-  res.status(200).json(ret);
+  res.status(200).json({ error: error });
+});
+
+app.post('/api/deletecard', async (req, res, next) => {
+  // incoming: cardId (or card name), userId
+  // outgoing: error
+  const { cardId, card, userId } = req.body;
+  let error = '';
+
+  try {
+    const db = client.db('COP4331Cards');
+    const { ObjectId } = require('mongodb');
+
+    if (cardId && ObjectId.isValid(cardId)) {
+      await db.collection('Cards').deleteOne({ _id: new ObjectId(cardId), UserId: userId });
+    } else if (card) {
+      await db.collection('Cards').deleteOne({ Card: card, UserId: userId });
+    } else {
+      error = 'No card specified for deletion';
+    }
+  } catch (e) {
+    error = e.toString();
+  }
+
+  res.status(200).json({ error: error });
+});
+
+app.post('/api/searchcards', async (req, res, next) => {
+  // incoming: userId, search
+  // outgoing: results, cardList (objects with id and card), error
+  let error = '';
+  const { userId, search } = req.body;
+  let _search = search ? search.trim() : '';
+
+  try {
+    const db = client.db('COP4331Cards');
+    const results = await db.collection('Cards').find({
+      UserId: userId,
+      Card: { $regex: _search, $options: 'i' }
+    }).toArray();
+
+    // Support both string array (standard COP4331 test) and detailed object array
+    const stringResults = results.map(item => item.Card);
+    const detailedResults = results.map(item => ({ id: item._id, card: item.Card }));
+
+    res.status(200).json({ results: stringResults, cardList: detailedResults, error: '' });
+  } catch (e) {
+    res.status(200).json({ results: [], cardList: [], error: e.toString() });
+  }
 });
 
 const path = require('path');

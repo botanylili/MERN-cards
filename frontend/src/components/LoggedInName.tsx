@@ -1,116 +1,68 @@
-import { useState } from 'react';
-import { buildPath } from '../Path';
+function LoggedInName() {
+    let user: { firstName?: string; lastName?: string } = {};
 
-function CardUI() {
-    const _ud: any = localStorage.getItem('user_data');
-    const ud = JSON.parse(_ud || '{}');
-    const userId: string = ud.id;
-
-    const [message, setMessage] = useState('');
-    const [searchResults, setResults] = useState('');
-    const [cardList, setCardList] = useState('');
-    const [search, setSearchValue] = useState('');
-    const [card, setCardNameValue] = useState('');
-
-    async function addCard(e: any): Promise<void> {
-        e.preventDefault();
-        const obj = { userId: userId, card: card };
-        const js = JSON.stringify(obj);
-
-        try {
-            const response = await fetch(buildPath('api/addcard'), {
-                method: 'POST',
-                body: js,
-                headers: { 'Content-Type': 'application/json' },
-            });
-
-            const res = JSON.parse(await response.text());
-
-            if (res.error && res.error.length > 0) {
-                setMessage('API Error: ' + res.error);
-            } else {
-                setMessage('Card has been added');
-                setCardNameValue('');
-            }
-        } catch (error: any) {
-            setMessage(error.toString());
+    try {
+        const userData = localStorage.getItem('user_data');
+        if (userData) {
+            user = JSON.parse(userData);
         }
+    } catch (e) {
+        console.error(e);
     }
 
-    async function searchCard(e: any): Promise<void> {
-        e.preventDefault();
-        const obj = { userId: userId, search: search };
-        const js = JSON.stringify(obj);
-
-        try {
-            const response = await fetch(buildPath('api/searchcards'), {
-                method: 'POST',
-                body: js,
-                headers: { 'Content-Type': 'application/json' },
-            });
-
-            const res = JSON.parse(await response.text());
-            const _results = res.results || [];
-            setResults(`Found ${_results.length} card(s)`);
-            setCardList(_results.join(', '));
-        } catch (error: any) {
-            setResults(error.toString());
-        }
+    function doLogout(event: React.MouseEvent<HTMLButtonElement>): void {
+        event.preventDefault();
+        localStorage.removeItem('user_data');
+        window.location.href = '/';
     }
 
     return (
-        <div className="app-container">
-            <h2 className="card-title">Card Deck</h2>
-            <div className="card-subtitle">Manage Your Collection</div>
-
-            {/* Add Card Section */}
-            <form onSubmit={addCard} style={{ marginBottom: '1.5rem' }}>
-                <div className="form-group">
-                    <label htmlFor="cardName">New Card Name</label>
-                    <input
-                        type="text"
-                        id="cardName"
-                        className="input-field"
-                        placeholder="e.g. Blue-Eyes White Dragon"
-                        value={card}
-                        onChange={(e) => setCardNameValue(e.target.value)}
-                        required
-                    />
-                </div>
-                <button type="submit" className="btn-primary">
-                    Add Card
-                </button>
-                {message && <div className="status-message success">{message}</div>}
-            </form>
-
-            <hr style={{ borderColor: 'rgba(255, 255, 255, 0.12)', margin: '1.5rem 0' }} />
-
-            {/* Search Cards Section */}
-            <form onSubmit={searchCard}>
-                <div className="form-group">
-                    <label htmlFor="searchVal">Search Collection</label>
-                    <input
-                        type="text"
-                        id="searchVal"
-                        className="input-field"
-                        placeholder="Search by card name..."
-                        value={search}
-                        onChange={(e) => setSearchValue(e.target.value)}
-                    />
-                </div>
-                <button type="submit" className="btn-secondary" style={{ width: '100%' }}>
-                    Search Cards
-                </button>
-            </form>
-
-            {searchResults && (
-                <div style={{ marginTop: '1.25rem' }}>
-                    <div style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: 600 }}>{searchResults}</div>
-                    {cardList && <div className="card-item-box">{cardList}</div>}
-                </div>
-            )}
+        <div
+            id="loggedInDiv"
+            style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                background: 'rgba(30, 41, 59, 0.7)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '12px',
+                padding: '0.85rem 1.5rem',
+                maxWidth: '560px',
+                margin: '0 auto 1.5rem auto',
+                boxSizing: 'border-box'
+            }}
+        >
+            <span
+                id="userName"
+                style={{
+                    color: '#f8fafc',
+                    fontWeight: 600,
+                    fontSize: '1rem',
+                    letterSpacing: '0.01em'
+                }}
+            >
+                Logged in as <strong style={{ color: '#38bdf8' }}>{user.firstName} {user.lastName}</strong>
+            </span>
+            <button
+                type="button"
+                id="logoutButton"
+                onClick={doLogout}
+                style={{
+                    padding: '0.5rem 1.1rem',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(248, 113, 113, 0.3)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                    color: '#fca5a5',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                }}
+            >
+                Log Out
+            </button>
         </div>
     );
 }
 
-export default CardUI;
+export default LoggedInName;
